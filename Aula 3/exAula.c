@@ -20,33 +20,35 @@ int main (int argc, char* args[])
     SDL_RenderFillRect(renderer, NULL);
     SDL_Rect r = { 200, 200, 50, 50 };
     SDL_Event e;
+    
     while (1) {
-        // while (SDL_PollEvent(&e) == 0);
-        // if (e.type == SDL_QUIT) {
-        //     break;
-        // } else if (e.type == SDL_KEYDOWN) {
-        //     switch (e.key.keysym.sym) {
-        //         case SDLK_UP:
-        //             r.y -= 10;
-        //         case SDLK_DOWN:
-        //             r.y += 10;
-        //         case SDLK_LEFT:
-        //             r.x -= 10;
-        //         case SDLK_RIGHT:
-        //             r.x += 10;
-        //     }
-        // }
+
         if(SDL_PollEvent(&e)) {
-            if(e.type == SDL_QUIT) {
+            if (e.type == SDL_QUIT) {
                 break;
+            } else if (e.type == SDL_KEYDOWN) {
+                switch (e.key.keysym.sym) {
+                    case SDLK_UP:
+                        r.y -= 1;
+                    case SDLK_DOWN:
+                        r.y += 1;
+                    case SDLK_LEFT:
+                        r.x -= 1;
+                    case SDLK_RIGHT:
+                        r.x += 1;
+                }
             }
         }
+
         if(SDL_GetTicks() >= ticks+interval) {
             ticks = SDL_GetTicks();
             moveRect(&r,10,0);
         }
+
         SDL_SetRenderDrawColor(renderer, 0x00,0x00,0xFF,0x00);
-        SDL_RenderFillRect(renderer, &r);    }
+        SDL_RenderFillRect(renderer, &r);  
+          
+    }
 
     /* FINALIZATION */
     SDL_DestroyRenderer(renderer);
