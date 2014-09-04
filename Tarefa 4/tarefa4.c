@@ -7,16 +7,14 @@ com seus tiros para poder sobreviver */
 
 #include <SDL2/SDL.h>
 #include <stdlib.h>
-
 #define MAX 20
-
+#define WIN_WID 640
+#define WIN_HEI 480
 struct bullet {
     SDL_Rect* g;
     int dir;
 };
-
 typedef struct bullet Bullet;
-
 void getRandomCoords(int* x, int* y) {
     int i = rand() % 4;
     if(i==0) {
@@ -33,7 +31,6 @@ void getRandomCoords(int* x, int* y) {
         *y = 465;
     }
 }
-
 void shootBullet(int i,int x, int y, Bullet** bullets) {
     SDL_Rect* g;
     Bullet* b;
@@ -51,7 +48,6 @@ void shootBullet(int i,int x, int y, Bullet** bullets) {
         }
     }
 }
-
 void checkColision(Bullet* bullet, SDL_Rect * enemy, SDL_Renderer* renderer) {
     if(bullet->g->x >= enemy->x - bullet->g->w && bullet->g->x <= enemy->x + enemy-> w) 
         if(bullet->g->y >= enemy->y - bullet->g->h && bullet->g->y <= enemy->y + enemy-> h) {
@@ -62,7 +58,6 @@ void checkColision(Bullet* bullet, SDL_Rect * enemy, SDL_Renderer* renderer) {
             free(enemy);
         }
 }
-
 void followPlayer(SDL_Rect* player, SDL_Rect** enemy) {
     int i;
     for(i=0;i<MAX;i++) {
@@ -76,7 +71,13 @@ void followPlayer(SDL_Rect* player, SDL_Rect** enemy) {
             enemy[i] -= 1;
     }
 }
-
+void bulletOutBounds(Bullet** bullets) {
+    int i;
+    for(i=0;i<MAX;i++) {
+        if(bullets[i]->g->x<0 || bullets[i]->g->y<0 || bullets[i]->g->x>WIN_WID || bullets[i]->g->h>WIN_HEI)
+            free(bullets[i]);
+    }
+}
 SDL_Rect* spawnEnemy(int x, int y) {
     SDL_Rect* r;
     g = (SDL_Rect *) malloc(sizeof(SDL_Rect));
@@ -86,28 +87,24 @@ SDL_Rect* spawnEnemy(int x, int y) {
     g->h=15;
     return r;
 }
-
-int main (int argc, char* args[])
-{
-    /* INITIALIZATION */
+int main (int argc, char* args[]) {
+    unsigned int cdTick;
     unsigned int ticks;
     unsigned int spawnInterval = 10000; // 60 FPS
+    unsigned int cooldownTime = 1000; // 60 FPS
     SDL_Init(SDL_INIT_EVERYTHING);
-    SDL_Window* window = SDL_CreateWindow("Hello World!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, SDL_WINDOW_SHOWN);
+    SDL_Window* window = SDL_CreateWindow("Hello World!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIN_WID, WIN_HEI, SDL_WINDOW_SHOWN);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
     ticks = SDL_GetTicks();
+    bool cooldown = false;
     int i,x,y,j;
-
-    /* EXECUTION */
     SDL_SetRenderDrawColor(renderer, 0xFF,0xFF,0xFF,0x00);
     SDL_RenderFillRect(renderer, NULL);
     SDL_Rect r = { 200, 200, 20, 20 };
     SDL_Rect* enemies[MAX];
     Bullet* bullets[MAX];
     SDL_Event e;
-    
     while (1) {
-
         if(SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
                 break;
@@ -125,26 +122,33 @@ int main (int argc, char* args[])
                         if(!cooldown) {
                             shootBullet(0,x,y,bullets);
                             cooldown = true;
+                            cdTick = SDL_GetTicks();
                         }
                     case SDLK_d:
                         if(!cooldown) {
                             shootBullet(1,x,y,bullets);
                             cooldown = true;
+                            cdTick = SDL_GetTicks();
                         }
                     case SDLK_s:
                         if(!cooldown) {
                             shootBullet(2,x,y,bullets);
                             cooldown = true;
+                            cdTick = SDL_GetTicks();
                         }
                     case SDLK_a:
                         if(!cooldown) {
                             shootBullet(3,x,y,bullets);
                             cooldown = true;
+                            cdTick = SDL_GetTicks();
                         }
                 }
             }
         }
-
+        if(cooldown) {
+            if(SDL_GetTicks() >= cdTick+cooldownTime) {
+                cooldown = false;
+        }
         if(SDL_GetTicks() >= ticks+spawnInterval) {
             for(i=0;i<MAX;i++) {
                 if(!enemies[i]) {
@@ -153,7 +157,6 @@ int main (int argc, char* args[])
                 }
             }
         }
-
         for(i=0;i<MAX;i++) {
             if(bullets[i]) {
                 for (j=0;j<MAX;i++) {
@@ -163,24 +166,6 @@ int main (int argc, char* args[])
                 }
             }
         }
-
-        SDL_SetRenderDrawColor(renderer, 0x00,0x00,0xFF,0x00);
-        SDL_RenderFillRect(renderer, &r);  
-
-        SDL_SetRenderDrawColor(renderer, 0x00,0xFF,0x00,0x00);
-        for(i=0;i<MAX;i++) {
-            if(bullet[i])
-                SDL_RenderFillRect(renderer, bullets[i]->g);
-        }
-
-        SDL_SetRenderDrawColor(renderer, 0xFF,0x00,0x00,0x00);
-        for(i=0;i<MAX;i++) {
-            if(enemies[i])
-                SDL_RenderFillRect(renderer, enemies[i]);
-        }
-
-        followPlayer(&r,enemies);
-
         for(i=0;i<MAX;i++) {
             if(enemies[i]) {
                 if(enemies[i]->x >= r.x - enemies[i]->w && enemies[i]->x <= r.x + r.w) 
@@ -190,7 +175,7 @@ int main (int argc, char* args[])
                     }
             }
         }
-
+        followPlayer(&r,enemies);
         for(i=0;i<MAX;i++) {
             if(bullets[i]) {
                 switch(bullets[i]->dir) {
@@ -208,6 +193,19 @@ int main (int argc, char* args[])
                         break;
                 }
             }
+        }
+        bulletOutBounds(bullets);
+        SDL_SetRenderDrawColor(renderer, 0x00,0x00,0xFF,0x00);
+        SDL_RenderFillRect(renderer, &r);  
+        SDL_SetRenderDrawColor(renderer, 0x00,0xFF,0x00,0x00);
+        for(i=0;i<MAX;i++) {
+            if(bullet[i])
+                SDL_RenderFillRect(renderer, bullets[i]->g);
+        }
+        SDL_SetRenderDrawColor(renderer, 0xFF,0x00,0x00,0x00);
+        for(i=0;i<MAX;i++) {
+            if(enemies[i])
+                SDL_RenderFillRect(renderer, enemies[i]);
         }
     }
     SDL_DestroyRenderer(renderer);
