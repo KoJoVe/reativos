@@ -34,7 +34,7 @@ void getRandomCoords(int* x, int* y) {
     }
 }
 
-void shootBullet(int i,int x, int y, Bullet* bullets) {
+void shootBullet(int i,int x, int y, Bullet** bullets) {
     SDL_Rect* g;
     Bullet* b;
     b = (Bullet *) malloc(sizeof(Bullet));
@@ -61,6 +61,20 @@ void checkColision(Bullet* bullet, SDL_Rect * enemy, SDL_Renderer* renderer) {
             free(bullet);
             free(enemy);
         }
+}
+
+void followPlayer(SDL_Rect* player, SDL_Rect** enemy) {
+    int i;
+    for(i=0;i<MAX;i++) {
+        if(enemy[i]->x < player->x)
+            enemy[i] += 1;
+        if(enemy[i]->x > player->x)
+            enemy[i] -= 1;
+        if(enemy[i]->y < player->y)
+            enemy[i] += 1;
+        if(enemy[i]->y > player->y)
+            enemy[i] -= 1;
+    }
 }
 
 SDL_Rect* spawnEnemy(int x, int y) {
@@ -163,6 +177,18 @@ int main (int argc, char* args[])
         for(i=0;i<MAX;i++) {
             if(enemies[i])
                 SDL_RenderFillRect(renderer, enemies[i]);
+        }
+
+        followPlayer(&r,enemies);
+
+        for(i=0;i<MAX;i++) {
+            if(enemies[i]) {
+                if(enemies[i]->x >= r.x - enemies[i]->w && enemies[i]->x <= r.x + r.w) 
+                    if(enemies[i]->y >= r.y - enemies[i]->h && enemies[i]->y <= r.y + r.h) {
+                        break;
+                        break; //EndGame
+                    }
+            }
         }
 
         for(i=0;i<MAX;i++) {
