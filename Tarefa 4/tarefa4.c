@@ -1,3 +1,10 @@
+/* Tarefa 4 - Sistemas Reativos
+
+Esta tarefa consiste em um jogo, onde o jogador controla um quadrado azul através das setas
+e atira para os quatro lados utilizando as teclas ASDW. A cada intervalo de tempo, surge um
+quadrado que é um inimigo vermelho. O jogador deve desviar dos quadrados vermelhos e atigi-los
+com seus tiros para poder sobreviver */
+
 #include <SDL2/SDL.h>
 #include <stdlib.h>
 
