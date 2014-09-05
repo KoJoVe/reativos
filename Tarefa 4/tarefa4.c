@@ -4,13 +4,14 @@ Esta tarefa consiste em um jogo, onde o jogador controla um quadrado azul atrav√
 e atira para os quatro lados utilizando as teclas ASDW. A cada intervalo de tempo, surge um
 quadrado que √© um inimigo vermelho. O jogador deve desviar dos quadrados vermelhos e atigi-los
 com seus tiros para poder sobreviver */
-
 #include <SDL2/SDL.h>
 #include <stdlib.h>
 #define MAX 20
 #define WIN_WID 640
 #define WIN_HEI 480
-
+#define ENEMY_SIZE 15
+#define PLAYER_SIZE 20
+#define PLAYER_STEP 20
 struct bullet {
     SDL_Rect* g;
     int dir;
@@ -22,14 +23,14 @@ void getRandomCoords(int* x, int* y) {
         *x = 0;
         *y = 0;
     } else if (i==1) {
-        *x = 625;
+        *x = WIN_WID - ENEMY_SIZE;
         *y = 0;
     } else if(i==2) {
         *x = 0;
-        *y = 465;
+        *y = WIN_HEI - ENEMY_SIZE;
     } else if(i==3) {
-        *x = 625;
-        *y = 465;
+        *x = WIN_WID - ENEMY_SIZE;
+        *y = WIN_HEI - ENEMY_SIZE;
     }
 }
 void shootBullet(int dir,int x, int y, Bullet** bullets) {
@@ -104,17 +105,16 @@ SDL_Rect* spawnEnemy(int x, int y) {
     g = (SDL_Rect *) malloc(sizeof(SDL_Rect));
     g->x=x;
     g->y=y;
-    g->w=15;
-    g->h=15;
+    g->w=ENEMY_SIZE;
+    g->h=ENEMY_SIZE;
     return g;
 }
 int main (int argc, char* args[]) {
-
     unsigned int cdTick;
     unsigned int ticks;
     unsigned int followTicks;
     unsigned int spawnInterval = 1000;
-    unsigned int cooldownTime = 1000; 
+    unsigned int cooldownTime = 200; 
     unsigned int followInterval = 100; 
     bool cooldown = false;
     int i,x,y,j;
@@ -123,13 +123,12 @@ int main (int argc, char* args[]) {
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
     SDL_SetRenderDrawColor(renderer, 0xFF,0xFF,0xFF,0x00);
     SDL_RenderFillRect(renderer, NULL);
-    SDL_Rect r = { 200, 200, 20, 20 };
+    SDL_Rect r = { 200, 200, PLAYER_SIZE, PLAYER_SIZE };
     SDL_Rect* enemies[MAX] = {NULL};
     Bullet* bullets[MAX] = {NULL};
     SDL_Event e;
     ticks = SDL_GetTicks();
     followTicks = SDL_GetTicks();
-
     while (1) {
         if(SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
@@ -137,45 +136,47 @@ int main (int argc, char* args[]) {
             } else if (e.type == SDL_KEYDOWN) {
                 switch (e.key.keysym.sym) {
                     case SDLK_UP:
-                        r.y -= 20;
+                        r.y -= PLAYER_STEP;
                         break;
                     case SDLK_DOWN:
-                        r.y += 20;
+                        r.y += PLAYER_STEP;
                         break;
                     case SDLK_LEFT:
-                        r.x -= 20;
+                        r.x -= PLAYER_STEP;
                         break;
                     case SDLK_RIGHT:
-                        r.x += 20;
+                        r.x += PLAYER_STEP;
                         break;
+                }
+                switch (e.key.keysym.sym) {
                     case SDLK_w:
-                        if(!cooldown) {
-                            shootBullet(0,r.x+8,r.y+8,bullets);
-                            cooldown = true;
-                            cdTick = SDL_GetTicks();
-                        }
-                        break;
-                    case SDLK_d:
-                        if(!cooldown) {
-                            shootBullet(1,r.x+8,r.y+8,bullets);
-                            cooldown = true;
-                            cdTick = SDL_GetTicks();
-                        }
-                        break;
-                    case SDLK_s:
-                        if(!cooldown) {
-                            shootBullet(2,r.x+8,r.y+8,bullets);
-                            cooldown = true;
-                            cdTick = SDL_GetTicks();
-                        }
-                        break;
-                    case SDLK_a:
-                        if(!cooldown) {
-                            shootBullet(3,r.x+8,r.y+8,bullets);
-                            cooldown = true;
-                            cdTick = SDL_GetTicks();
-                        }
-                        break;
+                            if(!cooldown) {
+                                shootBullet(0,r.x+8,r.y+8,bullets);
+                                cooldown = true;
+                                cdTick = SDL_GetTicks();
+                            }
+                            break;
+                        case SDLK_d:
+                            if(!cooldown) {
+                                shootBullet(1,r.x+8,r.y+8,bullets);
+                                cooldown = true;
+                                cdTick = SDL_GetTicks();
+                            }
+                            break;
+                        case SDLK_s:
+                            if(!cooldown) {
+                                shootBullet(2,r.x+8,r.y+8,bullets);
+                                cooldown = true;
+                                cdTick = SDL_GetTicks();
+                            }
+                            break;
+                        case SDLK_a:
+                            if(!cooldown) {
+                                shootBullet(3,r.x+8,r.y+8,bullets);
+                                cooldown = true;
+                                cdTick = SDL_GetTicks();
+                            }
+                            break;
                 }
             }
         }
@@ -231,10 +232,8 @@ int main (int argc, char* args[]) {
         }
         SDL_SetRenderDrawColor(renderer, 0xFF,0xFF,0xFF,0x00);
         SDL_RenderFillRect(renderer, NULL);
-
         SDL_SetRenderDrawColor(renderer, 0x00,0x00,0xFF,0x00);
         SDL_RenderFillRect(renderer, &r);
-
         SDL_SetRenderDrawColor(renderer, 0x00,0xFF,0x00,0x00);
         for(i=0;i<MAX;i++) {
             if(bullets[i]!=NULL)
@@ -245,10 +244,8 @@ int main (int argc, char* args[]) {
             if(enemies[i]!=NULL)
                 SDL_RenderFillRect(renderer, enemies[i]);
         }
-
         SDL_RenderPresent(renderer);
     }
-
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
