@@ -6,12 +6,12 @@ quadrado que é um inimigo vermelho. O jogador deve desviar dos quadrados vermel
 com seus tiros para poder sobreviver */
 #include <SDL2/SDL.h>
 #include <stdlib.h>
-#define MAX 20
+#define MAX 30
 #define WIN_WID 640
 #define WIN_HEI 480
 #define ENEMY_SIZE 15
 #define PLAYER_SIZE 20
-#define PLAYER_STEP 20
+#define PLAYER_STEP 5
 struct bullet {
     SDL_Rect* g;
     int dir;
@@ -100,6 +100,16 @@ void bulletOutBounds(Bullet** bullets) {
             }
     }
 }
+void playerWalk(SDL_Rect* player,bool up, bool down, bool left, bool right) {
+    if(up==true)
+        player->y -= PLAYER_STEP;
+    if(down==true)
+        player->y += PLAYER_STEP;
+    if(left==true)
+        player->x -= PLAYER_STEP;
+    if(right==true)
+        player->x += PLAYER_STEP;
+}
 SDL_Rect* spawnEnemy(int x, int y) {
     SDL_Rect* g;
     g = (SDL_Rect *) malloc(sizeof(SDL_Rect));
@@ -110,14 +120,9 @@ SDL_Rect* spawnEnemy(int x, int y) {
     return g;
 }
 int main (int argc, char* args[]) {
-    unsigned int cdTick;
-    unsigned int ticks;
-    unsigned int followTicks;
-    unsigned int spawnInterval = 1000;
-    unsigned int cooldownTime = 200; 
-    unsigned int followInterval = 100; 
-    bool cooldown = false;
-    int i,x,y,j;
+    unsigned int cdTick,ticks,followTicks,walkTick,spawnInterval = 1000,cooldownTime = 200,followInterval = 100, walkCd=20;
+    bool cooldown = false, upKey = false, downKey = false, leftKey = false, rightKey = false;
+    int i,x,y,j,key;
     SDL_Init(SDL_INIT_EVERYTHING);
     SDL_Window* window = SDL_CreateWindow("Hello World!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIN_WID, WIN_HEI, SDL_WINDOW_SHOWN);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
@@ -129,6 +134,7 @@ int main (int argc, char* args[]) {
     SDL_Event e;
     ticks = SDL_GetTicks();
     followTicks = SDL_GetTicks();
+    walkTick = SDL_GetTicks();
     while (1) {
         if(SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
@@ -136,49 +142,42 @@ int main (int argc, char* args[]) {
             } else if (e.type == SDL_KEYDOWN) {
                 switch (e.key.keysym.sym) {
                     case SDLK_UP:
-                        r.y -= PLAYER_STEP;
+                        upKey = true;
+                        downKey = false;
+                        leftKey = false;
+                        rightKey = false;
                         break;
                     case SDLK_DOWN:
-                        r.y += PLAYER_STEP;
+                        upKey = false;
+                        downKey = true;
+                        leftKey = false;
+                        rightKey = false;
                         break;
                     case SDLK_LEFT:
-                        r.x -= PLAYER_STEP;
+                        upKey = false;
+                        downKey = false;
+                        leftKey = true;
+                        rightKey = false;
                         break;
                     case SDLK_RIGHT:
-                        r.x += PLAYER_STEP;
+                        upKey = false;
+                        downKey = false;
+                        leftKey = false;
+                        rightKey = true;
                         break;
                 }
-                switch (e.key.keysym.sym) {
-                    case SDLK_w:
-                            if(!cooldown) {
-                                shootBullet(0,r.x+8,r.y+8,bullets);
-                                cooldown = true;
-                                cdTick = SDL_GetTicks();
-                            }
-                            break;
-                        case SDLK_d:
-                            if(!cooldown) {
-                                shootBullet(1,r.x+8,r.y+8,bullets);
-                                cooldown = true;
-                                cdTick = SDL_GetTicks();
-                            }
-                            break;
-                        case SDLK_s:
-                            if(!cooldown) {
-                                shootBullet(2,r.x+8,r.y+8,bullets);
-                                cooldown = true;
-                                cdTick = SDL_GetTicks();
-                            }
-                            break;
-                        case SDLK_a:
-                            if(!cooldown) {
-                                shootBullet(3,r.x+8,r.y+8,bullets);
-                                cooldown = true;
-                                cdTick = SDL_GetTicks();
-                            }
-                            break;
-                }
+                key = e.key.keysym.sym;
+                if(key==SDLK_w || key==SDLK_d || key==SDLK_s || key==SDLK_a)
+                    if(!cooldown) {
+                        shootBullet(key,r.x+8,r.y+8,bullets);
+                        cooldown = true;
+                        cdTick = SDL_GetTicks();
+                    }
             }
+        }
+        if(SDL_GetTicks() >= walkTick+walkCd) {
+            playerWalk(&r,upKey,downKey,leftKey,rightKey);
+            walkTick = SDL_GetTicks();
         }
         if(cooldown==true) {
             if(SDL_GetTicks() >= cdTick+cooldownTime) {
@@ -215,16 +214,16 @@ int main (int argc, char* args[]) {
         for(i=0;i<MAX;i++) {
             if(bullets[i]!=NULL) {
                 switch(bullets[i]->dir) {
-                    case 0:
+                    case SDLK_w:
                         bullets[i]->g->y -= 1;
                         break;
-                    case 1:
+                    case SDLK_d:
                         bullets[i]->g->x += 1;
                         break;
-                    case 2:
+                    case SDLK_s:
                         bullets[i]->g->y += 1;
                         break;
-                    case 3:
+                    case SDLK_a:
                         bullets[i]->g->x -= 1;
                         break;
                 }
