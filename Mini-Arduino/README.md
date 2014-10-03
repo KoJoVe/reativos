@@ -13,3 +13,5 @@ sorteados para a sequência e para o número principal, e o intervalo de tempo e
 diminui.
 
 Caso o jogador não pressione o botão no número principal ou aperte o botão em um número diferente, ele perde o jogo.
+
+Fotos do projeto montado no repositório.
