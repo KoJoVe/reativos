@@ -34,6 +34,7 @@ void button1_changed (int pin, int v);
 void button2_changed (int pin, int v);
 void timer1_expired (void);   
 void timer2_expired (void);
+void initialize(void);
 
 /* Programa principal: */
 
@@ -90,9 +91,9 @@ void loop () {
     	  				timer2_expired();
     	  				break;
 
-    	  		}
-	   		}
-    	} 
+                }
+            }
+        } 
     }
 }
 
